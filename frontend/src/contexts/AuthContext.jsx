@@ -1,17 +1,114 @@
+// import axios from "axios";
+// import httpStatus from "http-status";
+// import { createContext, useContext, useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import server from "../environment";   // ✅ only once
+
+// export const AuthContext = createContext({});
+
+// console.log("API server (environment):", server);
+
+// const effectiveServer = (server && server.trim()) || "http://localhost:8000";
+
+// const client = axios.create({
+//     baseURL: `${effectiveServer}/api/v1/users`   // ✅ use effectiveServer
+// });
+
+// export const AuthProvider = ({ children }) => {
+
+//     const authContext = useContext(AuthContext);
+//     const [userData, setUserData] = useState(authContext);
+//     const router = useNavigate();
+
+//     const handleRegister = async (name, username, password) => {
+//         try {
+//             const request = await client.post("/register", {
+//                 name,
+//                 username,
+//                 password
+//             });
+
+//             if (request.status === httpStatus.CREATED) {
+//                 return request.data.message;
+//             }
+//         } catch (err) {
+//             throw err;
+//         }
+//     };
+
+//     const handleLogin = async (username, password) => {
+//         try {
+//             const request = await client.post("/login", {
+//                 username,
+//                 password
+//             });
+
+//             if (request.status === httpStatus.OK) {
+//                 localStorage.setItem("token", request.data.token);
+//                 router("/home");
+//             }
+//         } catch (err) {
+//             throw err;
+//         }
+//     };
+
+//     const getHistoryOfUser = async () => {
+//         try {
+//             const request = await client.get("/get_all_activity", {
+//                 params: {
+//                     token: localStorage.getItem("token")
+//                 }
+//             });
+//             return request.data;
+//         } catch (err) {
+//             throw err;
+//         }
+//     };
+
+//     const addToUserHistory = async (meetingCode) => {
+//         try {
+//             const request = await client.post("/add_to_activity", {
+//                 token: localStorage.getItem("token"),
+//                 meeting_code: meetingCode
+//             });
+//             return request;
+//         } catch (err) {
+//             throw err;
+//         }
+//     };
+
+//     const data = {
+//         userData,
+//         setUserData,
+//         addToUserHistory,
+//         getHistoryOfUser,
+//         handleRegister,
+//         handleLogin
+//     };
+
+//     return (
+//         <AuthContext.Provider value={data}>
+//             {children}
+//         </AuthContext.Provider>
+//     );
+// };
+
 import axios from "axios";
 import httpStatus from "http-status";
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import server from "../environment";   // ✅ only once
+import server from "../environment";   
 
 export const AuthContext = createContext({});
 
-console.log("API server (environment):", server);
+console.log("API server:", server);
 
+// fallback if variable empty
 const effectiveServer = (server && server.trim()) || "http://localhost:8000";
 
+// 👇 new CLEAN base URL
 const client = axios.create({
-    baseURL: `${effectiveServer}/api/v1/users`   // ✅ use effectiveServer
+    baseURL: `${effectiveServer}/api/v1/users`
 });
 
 export const AuthProvider = ({ children }) => {
@@ -20,12 +117,15 @@ export const AuthProvider = ({ children }) => {
     const [userData, setUserData] = useState(authContext);
     const router = useNavigate();
 
+    // ---------------------------
+    // REGISTER
+    // ---------------------------
     const handleRegister = async (name, username, password) => {
         try {
-            const request = await client.post("/register", {
+            const request = await client.post("/auth/register", {
                 name,
                 username,
-                password
+                password,
             });
 
             if (request.status === httpStatus.CREATED) {
@@ -36,11 +136,14 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // ---------------------------
+    // LOGIN
+    // ---------------------------
     const handleLogin = async (username, password) => {
         try {
-            const request = await client.post("/login", {
+            const request = await client.post("/auth/login", {
                 username,
-                password
+                password,
             });
 
             if (request.status === httpStatus.OK) {
@@ -52,12 +155,15 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // ---------------------------
+    // GET USER HISTORY
+    // ---------------------------
     const getHistoryOfUser = async () => {
         try {
-            const request = await client.get("/get_all_activity", {
+            const request = await client.get("/activity/all", {
                 params: {
-                    token: localStorage.getItem("token")
-                }
+                    token: localStorage.getItem("token"),
+                },
             });
             return request.data;
         } catch (err) {
@@ -65,13 +171,16 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // ---------------------------
+    // ADD TO USER HISTORY
+    // ---------------------------
     const addToUserHistory = async (meetingCode) => {
         try {
-            const request = await client.post("/add_to_activity", {
+            const request = await client.post("/activity/add", {
                 token: localStorage.getItem("token"),
-                meeting_code: meetingCode
+                meeting_code: meetingCode,
             });
-            return request;
+            return request.data;
         } catch (err) {
             throw err;
         }
@@ -83,7 +192,7 @@ export const AuthProvider = ({ children }) => {
         addToUserHistory,
         getHistoryOfUser,
         handleRegister,
-        handleLogin
+        handleLogin,
     };
 
     return (
@@ -92,3 +201,4 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+
