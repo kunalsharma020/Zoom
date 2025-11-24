@@ -5,6 +5,10 @@ import { addToHistory, getUserHistory, login, register } from "../controllers/us
 
 const router = Router();
 
+router.route("/health").get((req, res) => {
+    res.json({ status: "Backend is running", timestamp: new Date().toISOString() });
+});
+
 router.route("/login").post(login)
 router.route("/register").post(register)
 router.route("/add_to_activity").post(addToHistory)

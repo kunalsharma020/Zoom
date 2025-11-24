@@ -4,15 +4,26 @@ import bcrypt, { hash } from "bcrypt"
 
 import crypto from "crypto"
 import { Meeting } from "../models/meeting.model.js";
+import mongoose from "mongoose";
+
+// Helper to check DB connection
+const isDbConnected = () => {
+    return mongoose.connection.readyState === 1;
+}
+
 const login = async (req, res) => {
 
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ message: "Please Provide" })
+        return res.status(400).json({ message: "Please Provide username and password" })
     }
 
     try {
+        if (!isDbConnected()) {
+            return res.status(503).json({ message: "Database is not connected. Please try again later." })
+        }
+
         const user = await User.findOne({ username });
         if (!user) {
             return res.status(httpStatus.NOT_FOUND).json({ message: "User Not Found" })
@@ -32,7 +43,8 @@ const login = async (req, res) => {
         }
 
     } catch (e) {
-        return res.status(500).json({ message: `Something went wrong ${e}` })
+        console.error("Login error:", e);
+        return res.status(500).json({ message: `Login failed: ${e.message}` })
     }
 }
 
@@ -40,8 +52,11 @@ const login = async (req, res) => {
 const register = async (req, res) => {
     const { name, username, password } = req.body;
 
-
     try {
+        if (!isDbConnected()) {
+            return res.status(503).json({ message: "Database is not connected. Please try again later." })
+        }
+
         const existingUser = await User.findOne({ username });
         if (existingUser) {
             return res.status(httpStatus.FOUND).json({ message: "User already exists" });
@@ -60,7 +75,8 @@ const register = async (req, res) => {
         res.status(httpStatus.CREATED).json({ message: "User Registered" })
 
     } catch (e) {
-        res.json({ message: `Something went wrong ${e}` })
+        console.error("Register error:", e);
+        res.status(500).json({ message: `Registration failed: ${e.message}` })
     }
 
 }
@@ -70,11 +86,19 @@ const getUserHistory = async (req, res) => {
     const { token } = req.query;
 
     try {
+        if (!isDbConnected()) {
+            return res.status(503).json({ message: "Database is not connected. Please try again later." })
+        }
+
         const user = await User.findOne({ token: token });
+        if (!user) {
+            return res.status(httpStatus.NOT_FOUND).json({ message: "User not found" })
+        }
         const meetings = await Meeting.find({ user_id: user.username })
         res.json(meetings)
     } catch (e) {
-        res.json({ message: `Something went wrong ${e}` })
+        console.error("Get history error:", e);
+        res.status(500).json({ message: `Failed to fetch history: ${e.message}` })
     }
 }
 
@@ -82,7 +106,14 @@ const addToHistory = async (req, res) => {
     const { token, meeting_code } = req.body;
 
     try {
+        if (!isDbConnected()) {
+            return res.status(503).json({ message: "Database is not connected. Please try again later." })
+        }
+
         const user = await User.findOne({ token: token });
+        if (!user) {
+            return res.status(httpStatus.NOT_FOUND).json({ message: "User not found" })
+        }
 
         const newMeeting = new Meeting({
             user_id: user.username,
@@ -93,7 +124,8 @@ const addToHistory = async (req, res) => {
 
         res.status(httpStatus.CREATED).json({ message: "Added code to history" })
     } catch (e) {
-        res.json({ message: `Something went wrong ${e}` })
+        console.error("Add to history error:", e);
+        res.status(500).json({ message: `Failed to add to history: ${e.message}` })
     }
 }
 

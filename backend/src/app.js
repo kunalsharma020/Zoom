@@ -26,14 +26,26 @@ app.use("/api/v1/users", userRoutes);
 
 const start = async () => {
     const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/zoom_local";
-    const connectionDb = await mongoose.connect(mongoUri, {
-        // mongoose options can go here if needed
-    });
+    
+    try {
+        const connectionDb = await Promise.race([
+            mongoose.connect(mongoUri, {
+                serverSelectionTimeoutMS: 10000,
+                connectTimeoutMS: 10000,
+            }),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("MongoDB connection timeout after 10s")), 11000)
+            )
+        ]);
+        console.log(`✓ MONGO Connected DB Host: ${connectionDb.connection.host}`)
+    } catch (mongoErr) {
+        console.error(`✗ MONGO Connection Failed: ${mongoErr.message}`);
+        console.error("⚠ Server will start anyway. Database operations will fail until MongoDB is available.");
+    }
 
-    console.log(`MONGO Connected DB Host: ${connectionDb.connection.host}`)
     if (!server.listening) {
         server.listen(app.get("port"), () => {
-            console.log(`LISTENING ON PORT ${app.get("port")}`)
+            console.log(`✓ LISTENING ON PORT ${app.get("port")}`)
         });
     } else {
         console.log(`Server already listening on ${app.get("port")}`)
