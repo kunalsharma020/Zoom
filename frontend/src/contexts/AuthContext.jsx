@@ -3,16 +3,14 @@ import httpStatus from "http-status";
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import server from "../environment";
-// import server from "../environment";
 
 export const AuthContext = createContext({});
 
-console.log("API server (environment):", server);
-
-const effectiveServer = (server && server.trim()) || "http://localhost:8000";
+const apiServer = (server && server.trim() !== "") ? server.trim() : "https://zoombackend-xd0f.onrender.com";
+console.log("API server:", apiServer);
 
 const client = axios.create({
-    baseURL: `${server}/api/v1/users`
+    baseURL: `${apiServer}/api/v1/users`
 })
 
 
