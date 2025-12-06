@@ -25,7 +25,12 @@ app.use(express.urlencoded({ limit: "40kb", extended: true }));
 app.use("/api/v1/users", userRoutes);
 
 const start = async () => {
+    console.log("🔍 DEBUG: Environment Variables Check");
+    console.log("PORT from env:", process.env.PORT);
+    console.log("MONGO_URI from env:", process.env.MONGO_URI ? "✓ SET" : "✗ NOT SET (using fallback)");
+    
     const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/zoom_local";
+    console.log("Using MongoDB URI:", mongoUri.substring(0, 50) + "...");
     
     try {
         const connectionDb = await Promise.race([

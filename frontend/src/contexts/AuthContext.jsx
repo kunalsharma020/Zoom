@@ -3,7 +3,7 @@ import httpStatus from "http-status";
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import server from "../environment";
-
+// import server from "../environment";
 
 export const AuthContext = createContext({});
 
@@ -12,7 +12,7 @@ console.log("API server (environment):", server);
 const effectiveServer = (server && server.trim()) || "http://localhost:8000";
 
 const client = axios.create({
-    baseURL: `${effectiveServer.replace(/\/$/, '')}/api/v1/users`
+    baseURL: `${server}/api/v1/users`
 })
 
 
